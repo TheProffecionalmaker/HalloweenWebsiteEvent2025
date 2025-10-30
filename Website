@@ -1,0 +1,140 @@
+import { motion, AnimatePresence } from 'framer-motion';
+import { useState, useEffect } from 'react';
+
+export default function HalloweenLanding() {
+  const [page, setPage] = useState('home');
+  const [score, setScore] = useState(0);
+  const [timer, setTimer] = useState(30);
+  const [gameActive, setGameActive] = useState(false);
+
+  const ghostEmojis = ['👻','👻','👻','👻','👻'];
+  const batEmojis = ['🦇','🦇','🦇'];
+  const pumpkinEmojis = ['🎃','🎃'];
+
+  // Mini-game: click ghosts to score points
+  const [ghosts, setGhosts] = useState(Array.from({ length: 5 }, (_, idx) => ({ id: idx, x: Math.random()*80+10, y: Math.random()*60+10 }))); 
+
+  const handleGhostClick = (id) => {
+    setScore(score + 1);
+    setGhosts(prev => prev.map(g => g.id === id ? { ...g, x: Math.random()*80+10, y: Math.random()*60+10 } : g));
+  };
+
+  useEffect(() => {
+    let interval;
+    if (gameActive && timer > 0) {
+      interval = setInterval(() => setTimer(prev => prev - 1), 1000);
+    } else if (timer === 0) {
+      setGameActive(false);
+    }
+    return () => clearInterval(interval);
+  }, [gameActive, timer]);
+
+  const startGame = () => {
+    setScore(0);
+    setTimer(30);
+    setGameActive(true);
+    setPage('game');
+    setGhosts(Array.from({ length: 5 }, (_, idx) => ({ id: idx, x: Math.random()*80+10, y: Math.random()*60+10 }))); 
+  };
+
+  return (
+    <div className="relative h-screen w-full overflow-hidden bg-black text-orange-500 flex flex-col items-center justify-center">
+      {/* Fog background */}
+      {!gameActive && <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_rgba(0,0,0,0.9),_rgba(0,0,0,1))]">
+        <div className="absolute inset-0 animate-[fog_20s_ease-in-out_infinite_alternate] bg-[url('https://cdn.jsdelivr.net/gh/JulianLaval/canvas-fog/fog.png')] opacity-30 mix-blend-lighten" />
+      </div>}
+
+      {/* Background emojis, hidden during game */}
+      {!gameActive && ghostEmojis.map((ghost, idx) => (
+        <motion.div
+          key={idx}
+          className="absolute text-5xl"
+          animate={{ y: [0, -50, 0], x: [0, 50 * (idx % 2 === 0 ? 1 : -1), 0] }}
+          transition={{ repeat: Infinity, duration: 5 + idx, ease: 'easeInOut' }}
+          style={{ top: `${20 + idx * 15}%`, left: `${10 + idx * 15}%` }}
+        >{ghost}</motion.div>
+      ))}
+      {!gameActive && batEmojis.map((bat, idx) => (
+        <motion.div
+          key={idx}
+          className="absolute text-4xl"
+          animate={{ x: ['-10vw', '110vw'] }}
+          transition={{ repeat: Infinity, duration: 8 + idx * 2, ease: 'linear' }}
+          style={{ top: `${10 + idx * 20}%` }}
+        >{bat}</motion.div>
+      ))}
+      {!gameActive && pumpkinEmojis.map((pumpkin, idx) => (
+        <motion.div
+          key={idx}
+          className="absolute text-6xl drop-shadow-[0_0_10px_rgba(255,120,0,0.8)]"
+          animate={{ y: [0, -20, 0], scale: [1, 1.1, 1] }}
+          transition={{ repeat: Infinity, duration: 3 + idx, ease: 'easeInOut' }}
+          style={{ bottom: '10%', left: `${20 + idx * 40}%` }}
+        >{pumpkin}</motion.div>
+      ))}
+
+      {/* Flickering candlelight overlay */}
+      {!gameActive && <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(255,140,0,0.1),_transparent_70%)] animate-[flicker_2s_infinite]" />}
+
+      {/* Page content with animations */}
+      <div className="z-10 text-center w-full px-4">
+        <AnimatePresence exitBeforeEnter>
+          {page === 'home' && (
+            <motion.div key="home" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+              <motion.h1 className="text-6xl md:text-8xl font-extrabold tracking-wider text-orange-500 drop-shadow-[0_0_15px_rgba(255,100,0,0.8)]" initial={{ y: 50 }} animate={{ y: 0 }} transition={{ duration: 2 }}>Happy Halloween</motion.h1>
+              <motion.p className="mt-4 text-lg md:text-2xl italic text-gray-300" initial={{ y: 20 }} animate={{ y: 0 }} transition={{ delay: 2, duration: 2 }}>Beware what lurks beyond the fog...</motion.p>
+              <div className="mt-6 space-x-4">
+                <button className="px-6 py-3 bg-orange-600 hover:bg-orange-700 rounded text-black font-bold" onClick={() => setPage('info')}>Learn More</button>
+                <button className="px-6 py-3 bg-orange-600 hover:bg-orange-700 rounded text-black font-bold" onClick={() => setPage('gallery')}>Gallery</button>
+                <button className="px-6 py-3 bg-orange-600 hover:bg-orange-700 rounded text-black font-bold" onClick={startGame}>Play Game</button>
+              </div>
+            </motion.div>
+          )}
+
+          {page === 'info' && (
+            <motion.div key="info" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+              <motion.h2 className="text-4xl md:text-6xl font-bold text-orange-500">Halloween Info</motion.h2>
+              <p className="mt-4 text-lg md:text-2xl text-gray-300 max-w-xl">Ghosts, ghouls, bats, and pumpkins roam the night. Enjoy the spookiness safely!</p>
+              <button className="mt-6 px-6 py-3 bg-orange-600 hover:bg-orange-700 rounded text-black font-bold" onClick={() => setPage('home')}>Back</button>
+            </motion.div>
+          )}
+
+          {page === 'gallery' && (
+            <motion.div key="gallery" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+              <motion.h2 className="text-4xl md:text-6xl font-bold text-orange-500">Spooky Gallery</motion.h2>
+              <p className="mt-4 text-lg md:text-2xl text-gray-300 max-w-xl">See more ghosts, pumpkins, and bats floating through the night.</p>
+              <button className="mt-6 px-6 py-3 bg-orange-600 hover:bg-orange-700 rounded text-black font-bold" onClick={() => setPage('home')}>Back</button>
+            </motion.div>
+          )}
+
+          {page === 'game' && (
+            <motion.div key="game" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+              <motion.h2 className="text-4xl md:text-6xl font-bold text-orange-500">Ghost Catch Game</motion.h2>
+              <p className="mt-4 text-lg md:text-2xl text-gray-300">Click the ghosts as fast as you can! Time left: {timer}s</p>
+              <p className="mt-2 text-2xl text-yellow-400">Score: {score}</p>
+              <div className="relative h-64 w-full mt-6">
+                {ghosts.map(g => (
+                  <motion.div key={g.id} className="absolute text-5xl cursor-pointer" style={{ top: `${g.y}%`, left: `${g.x}%` }} animate={{ x: [g.x, g.x + Math.random()*20-10, g.x], y: [g.y, g.y + Math.random()*20-10, g.y] }} transition={{ repeat: Infinity, duration: 3, ease: 'easeInOut' }} onClick={() => handleGhostClick(g.id)}>👻</motion.div>
+                ))}
+              </div>
+              {timer === 0 && <p className="mt-4 text-2xl text-red-500">Game Over! Final Score: {score}</p>}
+              <button className="mt-6 px-6 py-3 bg-orange-600 hover:bg-orange-700 rounded text-black font-bold" onClick={() => { setPage('home'); setGameActive(false); }}>Back</button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      {/* Keyframe animations */}
+      <style jsx>{`
+        @keyframes fog {
+          0% { background-position: 0% 0%; }
+          100% { background-position: 100% 100%; }
+        }
+        @keyframes flicker {
+          0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% { opacity: 0.99; }
+          20%, 24%, 55% { opacity: 0.7; }
+        }
+      `}</style>
+    </div>
+  );
+}
